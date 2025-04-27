@@ -25,7 +25,23 @@ def packet_callback(pkt):
                   output_area.insert(tk.END,f"[DNS] {pkt[IP].src} -> {pkt[IP].dst} : {pkt[DNS].qd.qname.decode()}")
         output_area.see(tk.END)
 def start_sniff():
-    port=str(port_field.get())
+    #if the port input field is empty dont check for int as this means the users does not wish to select a port
+    global sniffing
+    port=""
+    if(str(port_field.get())!=''):
+        port=str(port_field.get())
+    #checks to make sure the user inputted an inteter and if not a warning will be displayed
+        try:
+            int(port)
+            if(int(port)<1 or int(port)>65535):
+                tk.messagebox.showinfo("Error", "Port number must be a value 1-65535")
+                sniffing=False
+                output_area.insert(tk.END,"Error sniffing Stopped\n")
+                
+        except:
+             tk.messagebox.showinfo("Error", "Only Integer values can be inputted into the port number field")
+             sniffing=False
+             output_area.insert(tk.END,"Error sniffing Stopped\n")
     if(port!=""):
          sniff(prn=packet_callback,filter=f'tcp port {port} or udp port {port}', store=False,stop_filter=stop_filter)
     else:
@@ -44,8 +60,10 @@ def stop_filter(pkt):
 
 def do_stop():
     global sniffing
-    sniffing = False
-    output_area.insert(tk.END, "\nStopping sniffing...\n")
+    #checks to see if sniffing is true so the user can't use the stop button when the program is not sniffing
+    if sniffing==True:
+        sniffing = False
+        output_area.insert(tk.END, "\nStopping sniffing...\n")
 
 
 
@@ -53,7 +71,7 @@ def do_stop():
 # Create the main window
 root = tk.Tk()
 root.title("Sniffer-GUI")
-root.geometry("500x500")
+root.geometry("700x700")
 
 # Create a frame to hold label and input for port number
 port_frame = tk.Frame(root)
