@@ -25,8 +25,11 @@ def packet_callback(pkt):
                   output_area.insert(tk.END,f"[DNS] {pkt[IP].src} -> {pkt[IP].dst} : {pkt[DNS].qd.qname.decode()}")
         output_area.see(tk.END)
 def start_sniff():
-    while(sniffing):
-      sniff(prn=packet_callback, store=False,stop_filter=stop_filter)
+    port=str(port_field.get())
+    if(port!=""):
+         sniff(prn=packet_callback,filter=f'tcp port {port} or udp port {port}', store=False,stop_filter=stop_filter)
+    else:
+         sniff(prn=packet_callback, store=False,stop_filter=stop_filter)
 
 def do_start():
     global sniffing
@@ -51,6 +54,18 @@ def do_stop():
 root = tk.Tk()
 root.title("Sniffer-GUI")
 root.geometry("500x500")
+
+# Create a frame to hold label and input for port number
+port_frame = tk.Frame(root)
+port_frame.pack(pady=20)
+
+# Label
+port_label = tk.Label(port_frame, text="Enter port number")
+port_label.pack(side=tk.LEFT)
+
+# Entry
+port_field = tk.Entry(port_frame, width=30)
+port_field.pack(side=tk.LEFT, padx=5)
 
 # Create a buttons
 run_button = tk.Button(root, text="Start Sniffing", command=do_start)
