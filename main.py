@@ -2,6 +2,7 @@ from scapy.all import *
 import tkinter as tk
 from tkinter import scrolledtext
 import threading
+from tkinter import filedialog
 sniffing=False
 packets=[]
 def packet_callback(pkt):
@@ -65,9 +66,20 @@ def do_stop():
         sniffing = False
         output_area.insert(tk.END, "\nStopping sniffing...\n")
 
-
-
-
+def do_save():
+    #checks to see if there is packets to save and if not output a message telling the user
+    if packets:
+        filename = tk.filedialog.asksaveasfilename(defaultextension=".pcap",
+                                                 filetypes=[("PCAP files", "*.pcap")])
+        if filename:
+            wrpcap(filename, packets)
+            output_area.insert(tk.END, f"\nSaved {len(packets)} packets to {filename}\n")
+    else:
+        output_area.insert(tk.END, "\nNo packets to save!\n")
+       
+def do_clear():
+    packets.clear()
+    output_area.delete('1.0', tk.END)
 # Create the main window
 root = tk.Tk()
 root.title("Sniffer-GUI")
@@ -91,10 +103,16 @@ run_button.pack(pady=5)
 
 stop_button = tk.Button(root, text="Stop Sniffing", command=do_stop)
 stop_button.pack(pady=5)
+                 
+clear_button = tk.Button(root, text="Clear", command=do_clear)
+clear_button.pack(pady=5)
+
 
 # Create a text area for output
-output_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=100, height=100)
+output_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=75, height=25)
 output_area.pack(padx=10, pady=10)
 
+save_button = tk.Button(root, text="Save to PCAP", command=do_save)
+save_button.pack(pady=5)
 # Start the GUI event loop
 root.mainloop()
