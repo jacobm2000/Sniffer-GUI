@@ -6,26 +6,34 @@ from tkinter import filedialog
 import time
 sniffing=False
 packets=[]
+
+#This function temporarly allows the output area to be writen to and then disables it after to prevent user tampering
+def append_output(text):
+    output_area.config(state='normal')
+    output_area.insert(tk.END, f'{text}')
+    output_area.config(state='disabled')
+    output_area.see(tk.END)
+    
 def packet_callback(pkt):
         packets.append(pkt)
         if not sniffing:
            return
        
         if ARP in pkt:
-                  output_area.insert(tk.END,f"[ARP] {pkt[ARP].psrc} -> {pkt[ARP].pdst}\n")
+                   append_output(f"[ARP] {pkt[ARP].psrc} -> {pkt[ARP].pdst}\n")
         elif IP in pkt:
             
             if ICMP in pkt:
-                  output_area.insert(tk.END,f"[ICMP] {pkt[IP].src} -> {pkt[IP].dst} Type: {pkt[ICMP].type}\n")
+                  append_output(f"[ICMP] {pkt[IP].src} -> {pkt[IP].dst} Type: {pkt[ICMP].type}\n")
             elif TCP in pkt:
                     
-                  output_area.insert(tk.END,f"[TCP] {pkt[IP].src}:{pkt[TCP].sport} -> {pkt[IP].dst}:{pkt[TCP].dport}\n")
+                  append_output(f"[TCP] {pkt[IP].src}:{pkt[TCP].sport} -> {pkt[IP].dst}:{pkt[TCP].dport}\n")
             elif UDP in pkt:
-                  output_area.insert(tk.END,f"[UDP] {pkt[IP].src}:{pkt[UDP].sport} -> {pkt[IP].dst}:{pkt[UDP].dport}\n")
+                  append_output(f"[UDP] {pkt[IP].src}:{pkt[UDP].sport} -> {pkt[IP].dst}:{pkt[UDP].dport}\n")
             # DNS packets may not always contain a 'qd' field; check is required to avoid exceptions
             if DNS in pkt and pkt[DNS].qd is not None:
-                  output_area.insert(tk.END,f"[DNS] {pkt[IP].src} -> {pkt[IP].dst} : {pkt[DNS].qd.qname.decode()}\n")
-        output_area.see(tk.END)
+                  append_output(f"[DNS] {pkt[IP].src} -> {pkt[IP].dst} : {pkt[DNS].qd.qname.decode()}\n")
+        
 def start_sniff():
     #if the port input field is empty dont check for int as this means the users does not wish to select a port
     global sniffing
@@ -43,7 +51,7 @@ def start_sniff():
         except:
              tk.messagebox.showinfo("Error", "Only Integer values can be inputted into the port number field")
              sniffing=False
-             output_area.insert(tk.END,"Error sniffing Stopped\n")
+             append_output("Error sniffing Stopped\n")
     if(port!=""):
          sniff(prn=packet_callback,filter=f'tcp port {port} or udp port {port}', store=False,stop_filter=stop_filter)
     else:
@@ -52,7 +60,7 @@ def start_sniff():
 def do_start():
     global sniffing
     sniffing = True
-    output_area.insert(tk.END, "Starting live sniffing...\n")
+    append_output("Starting live sniffing...\n")
     sniff_thread = threading.Thread(target=start_sniff)
     sniff_thread.daemon = True
     sniff_thread.start()
@@ -65,7 +73,7 @@ def do_stop():
     #checks to see if sniffing is true so the user can't use the stop button when the program is not sniffing
     if sniffing==True:
         sniffing = False
-        output_area.insert(tk.END, "\nStopping sniffing...\n")
+        append_output("\nStopping sniffing...\n")
 
 def do_save():
     #checks to see if there is packets to save and if not output a message telling the user
@@ -74,14 +82,15 @@ def do_save():
                                                  filetypes=[("PCAP files", "*.pcap")])
         if filename:
             wrpcap(filename, packets)
-            output_area.insert(tk.END, f"\nSaved {len(packets)} packets to {filename}\n")
+            append_output(f"\nSaved {len(packets)} packets to {filename}\n")
     else:
-        output_area.insert(tk.END, "\nNo packets to save!\n")
+         append_output("\nNo packets to save!\n")
        
 def do_clear():
     packets.clear()
+    output_area.config(state='normal')
     output_area.delete('1.0', tk.END)
-    
+    output_area.config(state='disabled')
 def timed_sniff():
     def run():
         try:
@@ -93,7 +102,7 @@ def timed_sniff():
             tk.messagebox.showinfo("Error", "Only Integer values can be inputted into the time field")
             return
         do_start()
-        output_area.insert(tk.END, f"\nSniffing for {t} seconds\n")
+        append_output(f"\nSniffing for {t} seconds\n")
         time.sleep(t)  
         do_stop()
     # This thread is used so the main thread is not frozen and the GUI interface still displays
@@ -143,7 +152,7 @@ clear_button.pack(pady=5)
 
 
 # Create a text area for output
-output_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=75, height=25)
+output_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=75, height=25,state='disabled')
 output_area.pack(padx=10, pady=10)
 
 save_button = tk.Button(root, text="Save to PCAP", command=do_save)
