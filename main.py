@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import scrolledtext
 import threading
 from tkinter import filedialog
+import time
 sniffing=False
 packets=[]
 def packet_callback(pkt):
@@ -11,19 +12,19 @@ def packet_callback(pkt):
            return
        
         if ARP in pkt:
-                  output_area.insert(tk.END,f"[ARP] {pkt[ARP].psrc} -> {pkt[ARP].pdst}")
+                  output_area.insert(tk.END,f"[ARP] {pkt[ARP].psrc} -> {pkt[ARP].pdst}\n")
         elif IP in pkt:
             
             if ICMP in pkt:
-                  output_area.insert(tk.END,f"[ICMP] {pkt[IP].src} -> {pkt[IP].dst} Type: {pkt[ICMP].type}")
+                  output_area.insert(tk.END,f"[ICMP] {pkt[IP].src} -> {pkt[IP].dst} Type: {pkt[ICMP].type}\n")
             elif TCP in pkt:
                     
-                  output_area.insert(tk.END,f"[TCP] {pkt[IP].src}:{pkt[TCP].sport} -> {pkt[IP].dst}:{pkt[TCP].dport}")
+                  output_area.insert(tk.END,f"[TCP] {pkt[IP].src}:{pkt[TCP].sport} -> {pkt[IP].dst}:{pkt[TCP].dport}\n")
             elif UDP in pkt:
-                  output_area.insert(tk.END,f"[UDP] {pkt[IP].src}:{pkt[UDP].sport} -> {pkt[IP].dst}:{pkt[UDP].dport}")
+                  output_area.insert(tk.END,f"[UDP] {pkt[IP].src}:{pkt[UDP].sport} -> {pkt[IP].dst}:{pkt[UDP].dport}\n")
             # DNS packets may not always contain a 'qd' field; check is required to avoid exceptions
             if DNS in pkt and pkt[DNS].qd is not None:
-                  output_area.insert(tk.END,f"[DNS] {pkt[IP].src} -> {pkt[IP].dst} : {pkt[DNS].qd.qname.decode()}")
+                  output_area.insert(tk.END,f"[DNS] {pkt[IP].src} -> {pkt[IP].dst} : {pkt[DNS].qd.qname.decode()}\n")
         output_area.see(tk.END)
 def start_sniff():
     #if the port input field is empty dont check for int as this means the users does not wish to select a port
@@ -80,6 +81,24 @@ def do_save():
 def do_clear():
     packets.clear()
     output_area.delete('1.0', tk.END)
+    
+def timed_sniff():
+    def run():
+        try:
+           t=int(time_field.get())
+           if(t<=0):
+             tk.messagebox.showinfo("Error", "Only values greater than zero can be inputted into the time field")
+             return
+        except:
+            tk.messagebox.showinfo("Error", "Only Integer values can be inputted into the time field")
+            return
+        do_start()
+        output_area.insert(tk.END, f"\nSniffing for {t} seconds\n")
+        time.sleep(t)  
+        do_stop()
+    # This thread is used so the main thread is not frozen and the GUI interface still displays
+    threading.Thread(target=run, daemon=True).start()
+    
 # Create the main window
 root = tk.Tk()
 root.title("Sniffer-GUI")
@@ -89,13 +108,28 @@ root.geometry("700x700")
 port_frame = tk.Frame(root)
 port_frame.pack(pady=20)
 
-# Label
+
 port_label = tk.Label(port_frame, text="Enter port number")
 port_label.pack(side=tk.LEFT)
 
-# Entry
+
 port_field = tk.Entry(port_frame, width=30)
 port_field.pack(side=tk.LEFT, padx=5)
+
+# Create a frame to hold label,input, and button for timed start
+timed_frame = tk.Frame(root)
+timed_frame.pack(pady=20)
+
+
+timed_label = tk.Label(timed_frame, text="Enter time in seconds")
+timed_label.pack(side=tk.LEFT)
+
+
+time_field = tk.Entry(timed_frame, width=30)
+time_field.pack(side=tk.LEFT, padx=5)
+
+timed_button = tk.Button(timed_frame, text="Start Timed Capture", command=timed_sniff)
+timed_button.pack(side=tk.LEFT,padx=5)
 
 # Create a buttons
 run_button = tk.Button(root, text="Start Sniffing", command=do_start)
