@@ -7,7 +7,7 @@ import time
 sniffing=False
 packets=[]
 
-#This function temporarly allows the output area to be writen to and then disables it after to prevent user tampering
+#This function0 temporarly allows the output area to be writen to and then disables it after to prevent user tampering
 def append_output(text):
     output_area.config(state='normal')
     output_area.insert(tk.END, f'{text}')
@@ -46,7 +46,7 @@ def start_sniff():
             if(int(port)<1 or int(port)>65535):
                 tk.messagebox.showinfo("Error", "Port number must be a value 1-65535")
                 sniffing=False
-                output_area.insert(tk.END,"Error sniffing Stopped\n")
+                append_output("Error sniffing Stopped\n")
                 
         except:
              tk.messagebox.showinfo("Error", "Only Integer values can be inputted into the port number field")
@@ -65,6 +65,13 @@ def do_start():
     sniff_thread.daemon = True
     sniff_thread.start()
 
+#this function will be called when the user hits start to see if they selected timed sniff or not
+def check_mode():
+    
+    if (timed_check_var.get()==1):
+        timed_sniff()
+    else:
+        do_start()
 def stop_filter(pkt):
     return not sniffing  # If sniffing is False, stop sniffing
 
@@ -87,10 +94,16 @@ def do_save():
          append_output("\nNo packets to save!\n")
        
 def do_clear():
+    do_stop()
     packets.clear()
     output_area.config(state='normal')
     output_area.delete('1.0', tk.END)
     output_area.config(state='disabled')
+    port_field.delete(0, tk.END)
+    time_field.delete(0, tk.END)
+    timed_check_var.set(0)
+   
+
 def timed_sniff():
     def run():
         try:
@@ -103,7 +116,8 @@ def timed_sniff():
             return
         do_start()
         append_output(f"\nSniffing for {t} seconds\n")
-        time.sleep(t)  
+        time.sleep(t) 
+        append_output(f"\n{t} seconds have elapsed")
         do_stop()
     # This thread is used so the main thread is not frozen and the GUI interface still displays
     threading.Thread(target=run, daemon=True).start()
@@ -137,11 +151,15 @@ timed_label.pack(side=tk.LEFT)
 time_field = tk.Entry(timed_frame, width=30)
 time_field.pack(side=tk.LEFT, padx=5)
 
-timed_button = tk.Button(timed_frame, text="Start Timed Capture", command=timed_sniff)
-timed_button.pack(side=tk.LEFT,padx=5)
+# Variable to hold the state of the checkbox (0 = unchecked, 1 = checked)
+timed_check_var = tk.IntVar()
+
+# Create the checkbox
+timed_check = tk.Checkbutton(timed_frame, text="Enable Timed Capture", variable=timed_check_var)
+timed_check.pack(side=tk.LEFT,padx=5)
 
 # Create a buttons
-run_button = tk.Button(root, text="Start Sniffing", command=do_start)
+run_button = tk.Button(root, text="Start Sniffing", command=check_mode)
 run_button.pack(pady=5)
 
 stop_button = tk.Button(root, text="Stop Sniffing", command=do_stop)
