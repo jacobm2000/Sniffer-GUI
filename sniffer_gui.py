@@ -4,9 +4,19 @@ from tkinter import scrolledtext
 import threading
 from tkinter import filedialog
 import time
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 sniffing=False
 packets=[]
 
+#Used too keep track of how many times a protcol is detected
+protocol_counts = {
+    'TCP': 0,
+    'UDP': 0,
+    'ICMP': 0,
+    'ARP': 0,
+}
 #This function0 temporarly allows the output area to be writen to and then disables it after to prevent user tampering
 def append_output(text):
     output_area.config(state='normal')
@@ -14,6 +24,16 @@ def append_output(text):
     output_area.config(state='disabled')
     output_area.see(tk.END)
     
+#resets protocol counts back to zero
+def init_protocol_count():
+    global protocol_counts
+    protocol_counts= {
+        'TCP': 0,
+        'UDP': 0,
+        'ICMP': 0,
+        'ARP': 0,
+    }
+
 def packet_callback(pkt):
         packets.append(pkt)
         if not sniffing:
@@ -21,14 +41,17 @@ def packet_callback(pkt):
        
         if ARP in pkt:
                    append_output(f"[ARP] {pkt[ARP].psrc} -> {pkt[ARP].pdst}\n")
+                   protocol_counts['ARP']+=1
         elif IP in pkt:
             
             if ICMP in pkt:
+                  protocol_counts['ICMP']+=1
                   append_output(f"[ICMP] {pkt[IP].src} -> {pkt[IP].dst} Type: {pkt[ICMP].type}\n")
             elif TCP in pkt:
-                    
+                  protocol_counts['TCP']+=1
                   append_output(f"[TCP] {pkt[IP].src}:{pkt[TCP].sport} -> {pkt[IP].dst}:{pkt[TCP].dport}\n")
             elif UDP in pkt:
+                  protocol_counts['UDP']+=1
                   append_output(f"[UDP] {pkt[IP].src}:{pkt[UDP].sport} -> {pkt[IP].dst}:{pkt[UDP].dport}\n")
             # DNS packets may not always contain a 'qd' field; check is required to avoid exceptions
             if DNS in pkt and pkt[DNS].qd is not None:
@@ -81,7 +104,7 @@ def do_stop():
     if sniffing==True:
         sniffing = False
         append_output("\nStopping sniffing...\n")
-
+        
 def do_save():
     #checks to see if there is packets to save and if not output a message telling the user
     if packets:
@@ -102,7 +125,7 @@ def do_clear():
     port_field.delete(0, tk.END)
     time_field.delete(0, tk.END)
     timed_check_var.set(0)
-   
+    init_protocol_count()
 
 def timed_sniff():
     def run():
@@ -122,10 +145,48 @@ def timed_sniff():
     # This thread is used so the main thread is not frozen and the GUI interface still displays
     threading.Thread(target=run, daemon=True).start()
     
+def show_pie_chart():
+    do_stop()
+
+    labels = []
+    sizes = []
+    for key, value in protocol_counts.items():
+        if value > 0:
+            labels.append(key)
+            sizes.append(value)
+
+    if not sizes:
+        tk.messagebox.showinfo("No Data", "No packets captured yet.")
+        return
+
+    # Create a new window
+    chart_window = tk.Toplevel(root)
+    chart_window.title("Protocol Distribution Pie Chart")
+    chart_window.geometry("600x400")  # Adjust window size as needed
+
+    fig, ax = plt.subplots(figsize=(5, 4))  # Adjust figure size
+
+    # Create pie chart
+    wedges, _ = ax.pie(sizes, startangle=90)
+
+    total = sum(sizes)
+    legend_labels = [f"{label}: {size} ({size / total:.1%})" for label, size in zip(labels, sizes)]
+    ax.legend(wedges, legend_labels, title="Protocols", loc="center left", bbox_to_anchor=(1, 0.5))
+
+    ax.axis('equal')
+    fig.tight_layout()  # Automatically adjust layout to fit legend
+
+    canvas = FigureCanvasTkAgg(fig, master=chart_window)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+
+    
+    
 # Create the main window
 root = tk.Tk()
 root.title("Sniffer-GUI")
-root.geometry("700x700")
+root.geometry("700x750")
 
 # Create a frame to hold label and input for port number
 port_frame = tk.Frame(root)
@@ -173,7 +234,11 @@ clear_button.pack(pady=5)
 output_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=75, height=25,state='disabled')
 output_area.pack(padx=10, pady=10)
 
+chart_button = tk.Button(root, text="Show Protocol Pie Chart", command=show_pie_chart)
+chart_button.pack(pady=5)
+
 save_button = tk.Button(root, text="Save to PCAP", command=do_save)
 save_button.pack(pady=5)
+
 # Start the GUI event loop
 root.mainloop()
