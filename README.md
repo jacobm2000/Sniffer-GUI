@@ -12,7 +12,7 @@ It allows live network traffic capture with optional port filtering and timed ca
 - ✅ **Timed capture** mode
 - ✅ **Real-time output display**
 - ✅ **Save captures as `.pcap` files**
-- ✅ **Protocol Summary Pie CHart**
+- ✅ **Protocol Summary Pie Chart**
 - ✅ **Clear/reset session data**
 
 ---
