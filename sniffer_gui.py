@@ -5,18 +5,18 @@ import threading
 from tkinter import filedialog
 import time
 import matplotlib.pyplot as plt
+from sniffer_core import( packet_callback, set_output_callback,get_packets,
+packets_clear, init_protocol_count,get_protocol_count,set_sniffing_status_callback)
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 sniffing=False
-packets=[]
 
-#Used too keep track of how many times a protcol is detected
-protocol_counts = {
-    'TCP': 0,
-    'UDP': 0,
-    'ICMP': 0,
-    'ARP': 0,
-}
+#sets up the callback function for checking if sniffing
+def is_sniffing():
+    return sniffing
+set_sniffing_status_callback(is_sniffing)
+
+
 #This function0 temporarly allows the output area to be writen to and then disables it after to prevent user tampering
 def append_output(text):
     output_area.config(state='normal')
@@ -24,38 +24,7 @@ def append_output(text):
     output_area.config(state='disabled')
     output_area.see(tk.END)
     
-#resets protocol counts back to zero
-def init_protocol_count():
-    global protocol_counts
-    protocol_counts= {
-        'TCP': 0,
-        'UDP': 0,
-        'ICMP': 0,
-        'ARP': 0,
-    }
-
-def packet_callback(pkt):
-        packets.append(pkt)
-        if not sniffing:
-           return
-       
-        if ARP in pkt:
-                   append_output(f"[ARP] {pkt[ARP].psrc} -> {pkt[ARP].pdst}\n")
-                   protocol_counts['ARP']+=1
-        elif IP in pkt:
-            
-            if ICMP in pkt:
-                  protocol_counts['ICMP']+=1
-                  append_output(f"[ICMP] {pkt[IP].src} -> {pkt[IP].dst} Type: {pkt[ICMP].type}\n")
-            elif TCP in pkt:
-                  protocol_counts['TCP']+=1
-                  append_output(f"[TCP] {pkt[IP].src}:{pkt[TCP].sport} -> {pkt[IP].dst}:{pkt[TCP].dport}\n")
-            elif UDP in pkt:
-                  protocol_counts['UDP']+=1
-                  append_output(f"[UDP] {pkt[IP].src}:{pkt[UDP].sport} -> {pkt[IP].dst}:{pkt[UDP].dport}\n")
-            # DNS packets may not always contain a 'qd' field; check is required to avoid exceptions
-            if DNS in pkt and pkt[DNS].qd is not None:
-                  append_output(f"[DNS] {pkt[IP].src} -> {pkt[IP].dst} : {pkt[DNS].qd.qname.decode()}\n")
+set_output_callback(append_output)
         
 def start_sniff():
     #if the port input field is empty dont check for int as this means the users does not wish to select a port
@@ -70,11 +39,13 @@ def start_sniff():
                 tk.messagebox.showinfo("Error", "Port number must be a value 1-65535")
                 sniffing=False
                 append_output("Error sniffing Stopped\n")
+                return
                 
         except:
              tk.messagebox.showinfo("Error", "Only Integer values can be inputted into the port number field")
              sniffing=False
              append_output("Error sniffing Stopped\n")
+             return
     if(port!=""):
          sniff(prn=packet_callback,filter=f'tcp port {port} or udp port {port}', store=False,stop_filter=stop_filter)
     else:
@@ -107,6 +78,7 @@ def do_stop():
         
 def do_save():
     #checks to see if there is packets to save and if not output a message telling the user
+    packets=get_packets()
     if packets:
         filename = tk.filedialog.asksaveasfilename(defaultextension=".pcap",
                                                  filetypes=[("PCAP files", "*.pcap")])
@@ -118,7 +90,7 @@ def do_save():
        
 def do_clear():
     do_stop()
-    packets.clear()
+    packets_clear()
     output_area.config(state='normal')
     output_area.delete('1.0', tk.END)
     output_area.config(state='disabled')
@@ -147,7 +119,7 @@ def timed_sniff():
     
 def show_pie_chart():
     do_stop()
-
+    protocol_counts=get_protocol_count()
     labels = []
     sizes = []
     for key, value in protocol_counts.items():
