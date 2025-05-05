@@ -22,11 +22,12 @@ It allows live network traffic capture with optional port filtering and timed ca
 - Python 3.x  
 - `scapy`  
 - `tkinter` (usually included with Python)
+- `matplotlib`
 
 Install dependencies via pip:
 
 ```bash
-pip install scapy
+pip install scapy matplotlib
 ```
 
 > 💡 Note: Run as administrator/root if needed to access network interfaces.
