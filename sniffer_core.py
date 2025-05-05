@@ -8,7 +8,7 @@ protocol_counts = {
     'ICMP': 0,
     'ARP': 0,
 }
-#resets protocol counts back to zero
+
 packets=[]
 output_callback = None
 
@@ -25,7 +25,7 @@ def set_sniffing_status_callback(callback):
     global sniffing_status_callback
     sniffing_status_callback = callback
 
-
+#resets protocol counts back to zero
 def init_protocol_count():
     global protocol_counts
     protocol_counts= {

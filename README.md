@@ -65,7 +65,17 @@ The sniffer supports and displays:
 
 Captured packets are stored in memory and can be saved in `.pcap` format for later analysis in tools like Wireshark.
 
----
+## Screenshots
+
+### Main Window
+![](./screenshots/main.JPG)
+
+### Protocol Distribution Pie Chart
+![](./screenshots/pie.JPG)
+
+
+
+
 
 ## 🔒 Notes
 
