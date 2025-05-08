@@ -1,11 +1,11 @@
-# 🕵️‍♂️ Sniffer-GUI
+# Sniffer-GUI
 
 A simple Python-based GUI packet sniffer built using **Scapy** and **Tkinter**.  
 It allows live network traffic capture with optional port filtering and timed capture.
 
 ---
 
-## 🚀 Features
+## Features
 
 - ✅ **Live packet sniffing**
 - ✅ **Optional port filtering** (TCP/UDP)
@@ -17,7 +17,7 @@ It allows live network traffic capture with optional port filtering and timed ca
 
 ---
 
-## 🛠️ Requirements
+## Requirements
 
 - Python 3.x  
 - `scapy`  
@@ -30,11 +30,11 @@ Install dependencies via pip:
 pip install scapy matplotlib
 ```
 
-> 💡 Note: Run as administrator/root if needed to access network interfaces.
+>  Note: Run as administrator/root if needed to access network interfaces.
 
 ---
 
-## 📦 How to Use
+##  How to Use
 
 1. Run the script:
 
@@ -56,7 +56,7 @@ pip install scapy matplotlib
 
 ---
 
-## 📄 Output Info
+## Output Info
 
 The sniffer supports and displays:
 - ARP
@@ -78,7 +78,7 @@ Captured packets are stored in memory and can be saved in `.pcap` format for lat
 
 
 
-## 🔒 Notes
+## Notes
 
 - This tool is for educational or testing purposes on networks you own or are authorized to monitor.
 - Packet sniffing may require elevated privileges depending on your OS.
