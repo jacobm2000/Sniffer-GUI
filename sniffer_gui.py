@@ -1,8 +1,7 @@
 from scapy.all import *
 import tkinter as tk
-from tkinter import scrolledtext
+from tkinter import filedialog,ttk,scrolledtext
 import threading
-from tkinter import filedialog
 import time
 import matplotlib.pyplot as plt
 from sniffer_core import( packet_callback, set_output_callback,get_packets,
@@ -165,52 +164,59 @@ port_frame = tk.Frame(root)
 port_frame.pack(pady=20)
 
 
-port_label = tk.Label(port_frame, text="Enter port number")
+port_label = ttk.Label(port_frame, text="Enter port number")
 port_label.pack(side=tk.LEFT)
 
 
-port_field = tk.Entry(port_frame, width=30)
+port_field = ttk.Entry(port_frame, width=30)
 port_field.pack(side=tk.LEFT, padx=5)
 
 # Create a frame to hold label,input, and button for timed start
-timed_frame = tk.Frame(root)
+timed_frame = ttk.Frame(root)
 timed_frame.pack(pady=20)
 
 
-timed_label = tk.Label(timed_frame, text="Enter time in seconds")
+timed_label = ttk.Label(timed_frame, text="Enter time in seconds")
 timed_label.pack(side=tk.LEFT)
 
 
-time_field = tk.Entry(timed_frame, width=30)
+time_field = ttk.Entry(timed_frame, width=30)
 time_field.pack(side=tk.LEFT, padx=5)
 
 # Variable to hold the state of the checkbox (0 = unchecked, 1 = checked)
 timed_check_var = tk.IntVar()
 
 # Create the checkbox
-timed_check = tk.Checkbutton(timed_frame, text="Enable Timed Capture", variable=timed_check_var)
+timed_check = ttk.Checkbutton(timed_frame, text="Enable Timed Capture", variable=timed_check_var)
 timed_check.pack(side=tk.LEFT,padx=5)
 
-# Create a buttons
-run_button = tk.Button(root, text="Start Sniffing", command=check_mode)
-run_button.pack(pady=5)
 
-stop_button = tk.Button(root, text="Stop Sniffing", command=do_stop)
-stop_button.pack(pady=5)
+#Frame for Action buttons such as run, stop ,and clear
+actions_frame = tk.Frame(root)
+actions_frame.pack(pady=5)
+# Create a buttons
+run_button = ttk.Button(actions_frame, text="Start Sniffing", command=check_mode)
+run_button.pack(side=tk.LEFT,padx=5)
+
+stop_button = ttk.Button(actions_frame, text="Stop Sniffing", command=do_stop)
+stop_button.pack(side=tk.LEFT,padx=5)
                  
-clear_button = tk.Button(root, text="Clear", command=do_clear)
-clear_button.pack(pady=5)
+clear_button = ttk.Button(actions_frame, text="Clear", command=do_clear)
+clear_button.pack(side=tk.LEFT,padx=5)
+
 
 
 # Create a text area for output
-output_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=75, height=25,state='disabled')
-output_area.pack(padx=10, pady=10)
+output_area = scrolledtext.ScrolledText(root, wrap=tk.WORD)
+output_area.pack(fill=tk.Y, expand=True, padx=10, pady=10)
 
-chart_button = tk.Button(root, text="Show Protocol Pie Chart", command=show_pie_chart)
-chart_button.pack(pady=5)
+bottom_frame = tk.Frame(root)
+bottom_frame.pack(pady=20)
+chart_button = ttk.Button(bottom_frame, text="Show Protocol Pie Chart", command=show_pie_chart)
+chart_button.pack(side=tk.LEFT,padx=5)
 
-save_button = tk.Button(root, text="Save to PCAP", command=do_save)
-save_button.pack(pady=5)
+save_button = ttk.Button(bottom_frame, text="Save to PCAP", command=do_save)
+save_button.pack(side=tk.LEFT,padx=5)
 
 # Start the GUI event loop
 root.mainloop()
